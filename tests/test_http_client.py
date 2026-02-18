@@ -43,3 +43,23 @@ def test_api_request_refreshes_when_token_is_dict():
     resp = c.request("GET", "/me", api=True)
 
     assert resp["headers"].get("Authorization") == "Bearer fresh-token"
+
+
+def test_api_request_refreshes_when_token_is_dict_with_future_expiry():
+
+    c = Client()
+    c.oauth2_token = {"access_token": "stale", "expires_at": int(time.time()) + 9999}
+
+    resp = c.request("GET", "/me", api=True)
+
+    assert resp["headers"].get("Authorization") == "Bearer fresh-token"
+
+
+def test_api_request_no_auth_header_when_api_false_with_dict_token():
+    # When api=False the token should be completely ignored regardless of type.
+    c = Client()
+    c.oauth2_token = {"access_token": "stale", "expires_at": 0}
+
+    resp = c.request("GET", "/public", api=False)
+
+    assert "Authorization" not in resp["headers"]
